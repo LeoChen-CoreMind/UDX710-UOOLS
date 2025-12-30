@@ -8,6 +8,7 @@ export default {
     confirm: '确认',
     cancel: '取消',
     save: '保存',
+    saving: '保存中...',
     delete: '删除',
     edit: '编辑',
     close: '关闭',
@@ -191,6 +192,7 @@ export default {
     chinaUnicom: '中国联通',
     chinaMobile: '中国移动',
     chinaTelecom: '中国电信',
+    chinaBroadnet: '中国广电',
     tips: '使用说明',
     tip1: '点击运营商快捷按钮可快速填充常用APN配置',
     tip2: '大多数情况下只需填写APN名称，用户名和密码可留空',
@@ -244,7 +246,12 @@ export default {
     notApplied: '未应用',
     connectionStatus: '连接状态',
     active: '已激活',
-    inactive: '未激活'
+    inactive: '未激活',
+    lastTemplateHint: '这是最后一个模板且正在使用中，需要先切换到自动模式才能删除。是否自动切换？',
+    activeTemplateHint: '该模板正在使用中，需要先切换到自动模式才能删除。是否自动切换？',
+    switchedToAuto: '已切换到自动模式并删除模板',
+    apnDescription: '接入点名称(APN)是设备连接运营商网络的标识，系统会根据SIM卡自动匹配。若无法上网，可尝试手动配置，具体参数请咨询当地运营商。',
+    apnSettingsTitle: 'APN设置'
   },
 
   // 高级网络模块
@@ -299,7 +306,11 @@ export default {
     clickScan: '点击"扫描"获取周边基站',
     scanningCells: '正在扫描小区...',
     arfcnPlaceholder: '频点 ARFCN',
-    lockCellBtn: '锁定小区'
+    lockCellBtn: '锁定小区',
+    recommended: '推荐',
+    recommendReason: '综合信号质量最佳',
+    cellList: '小区列表',
+    current: '当前'
   },
 
   // 短信管理模块
@@ -375,7 +386,53 @@ export default {
     enabled: '已开启',
     disabled: '关闭',
     configSaved: '配置已保存！',
-    deleteRecord: '删除记录'
+    deleteRecord: '删除记录',
+    // 教程相关
+    viewTutorial: '查看教程',
+    tutorialTitle: '短信转发教程',
+    tutorialSubtitle: '快速配置消息推送',
+    tutorialIntro: '功能介绍',
+    tutorialIntroDesc: '短信转发功能可以将设备收到的短信实时推送到您的手机或电脑，支持微信、钉钉、飞书等多种推送平台。当设备收到新短信时，系统会自动通过Webhook将短信内容发送到您配置的推送服务。部分平台（如PushPlus）支持HTML格式，可自定义美化短信显示样式。',
+    tutorialPlatforms: '支持的平台',
+    tutorialWechat: '微信推送',
+    tutorialDingtalk: '钉钉机器人',
+    tutorialFeishu: '飞书机器人',
+    tutorialGroup: '群消息',
+    tutorialRecommend: '推荐',
+    tutorialQuickStart: '快速配置',
+    tutorialStep1Title: '获取Token',
+    tutorialStep1Desc: '访问 pushplus.plus 网站，微信扫码登录后复制您的Token',
+    tutorialStep2Title: '配置转发',
+    tutorialStep2Desc: '选择PushPlus平台，将请求体中的 YOUR_TOKEN 替换为您的Token',
+    tutorialStep3Title: '测试保存',
+    tutorialStep3Desc: '点击测试按钮验证配置，成功后点击保存',
+    tutorialPushplusStep1: '访问 PushPlus 官网，使用微信扫码登录。登录后在「发送消息」页面可以看到您的 Token，复制保存。',
+    tutorialPushplusStep2: '回到本页面，确保平台选择为 PushPlus。在「请求体」中找到 YOUR_TOKEN 并替换为您刚才复制的 Token。开启「启用Webhook通知」开关。',
+    tutorialPushplusStep3: '点击「测试」按钮，检查微信是否收到测试消息。收到消息说明配置成功，点击「保存」完成配置。',
+    tutorialOtherPlatforms: '其他平台配置',
+    tutorialServerchanDesc: '访问 sct.ftqq.com 网站，微信扫码登录后复制 SendKey。将URL中的 YOUR_KEY 替换为您的 SendKey 即可。',
+    tutorialBarkDesc: '在 App Store 搜索「Bark」并安装。打开App后复制显示的推送URL中的Key，将URL中的 YOUR_KEY 替换即可。',
+    tutorialDingtalkDesc: '打开钉钉群 → 群设置 → 智能群助手 → 添加机器人 → 自定义机器人。安全设置选择「自定义关键词」，添加关键词「新短信」。复制生成的 Webhook 地址中的 access_token 替换 YOUR_TOKEN。',
+    tutorialFeishuDesc: '打开飞书群 → 群设置 → 群机器人 → 添加机器人 → 自定义机器人。复制生成的 Webhook 地址中的 token 部分替换 YOUR_TOKEN。',
+    tutorialVariables: '支持的变量',
+    tutorialVariablesDesc: '在请求体中可以使用以下变量，系统会自动替换为实际内容：',
+    tutorialVarName: '变量',
+    tutorialVarDesc: '说明',
+    tutorialVarExample: '示例',
+    tutorialVarSender: '发件人号码',
+    tutorialVarContent: '短信内容',
+    tutorialVarContentExample: '您的验证码是123456',
+    tutorialVarTime: '接收时间',
+    tutorialCustomExample: '自定义配置示例',
+    tutorialCustomExampleDesc: '如果您使用其他推送服务，可以参考以下格式自定义请求体：',
+    tutorialFaq: '常见问题',
+    tutorialFaq1Q: '测试成功但收不到实际短信通知？',
+    tutorialFaq1A: '请确认已点击「保存」按钮，并且「启用Webhook通知」开关已开启。部分推送平台有消息数量限制，请检查是否超限。',
+    tutorialFaq2Q: '提示发送失败怎么办？',
+    tutorialFaq2A: '请检查 Token/Key 是否正确复制，网络是否正常，以及推送平台服务是否正常运行。',
+    tutorialFaq3Q: '支持同时推送到多个平台吗？',
+    tutorialFaq3A: '目前仅支持单一平台。如需多平台推送，建议使用支持多渠道的推送服务（如PushPlus的多渠道功能）。',
+    tutorialGotIt: '我知道了'
   },
 
   // 流量统计模块
@@ -578,6 +635,14 @@ export default {
     installingUpdate: '正在安装更新',
     startUpdate: '开始更新',
     updateWarning: '更新过程中请勿断电或关闭页面，更新完成后建议重启设备'
+  },
+
+  // 更新通知弹窗
+  updateNotification: {
+    title: '发现新版本',
+    message: '新版本 v{version} 已发布，建议前往更新板块查看详情',
+    goUpdate: '去更新',
+    later: '稍后'
   },
 
   // AT调试模块

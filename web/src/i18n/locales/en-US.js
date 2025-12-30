@@ -8,6 +8,7 @@ export default {
     confirm: 'Confirm',
     cancel: 'Cancel',
     save: 'Save',
+    saving: 'Saving...',
     delete: 'Delete',
     edit: 'Edit',
     close: 'Close',
@@ -191,6 +192,7 @@ export default {
     chinaUnicom: 'China Unicom',
     chinaMobile: 'China Mobile',
     chinaTelecom: 'China Telecom',
+    chinaBroadnet: 'China Broadnet',
     tips: 'Tips',
     tip1: 'Click carrier buttons to quickly fill common APN configurations',
     tip2: 'In most cases, only APN name is required, username and password can be left empty',
@@ -245,7 +247,12 @@ export default {
     notApplied: 'Not Applied',
     connectionStatus: 'Connection Status',
     active: 'Active',
-    inactive: 'Inactive'
+    inactive: 'Inactive',
+    lastTemplateHint: 'This is the last template and is currently in use. You need to switch to auto mode before deleting. Switch automatically?',
+    activeTemplateHint: 'This template is currently in use. You need to switch to auto mode before deleting. Switch automatically?',
+    switchedToAuto: 'Switched to auto mode and deleted template',
+    apnDescription: 'Access Point Name (APN) is the identifier for your device to connect to the carrier network. The system will automatically match it based on your SIM card. If you cannot access the internet, try manual configuration. Please consult your local carrier for specific parameters.',
+    apnSettingsTitle: 'APN Settings'
   },
 
   // Advanced
@@ -300,7 +307,11 @@ export default {
     clickScan: 'Click "Scan" to discover nearby cells',
     scanningCells: 'Scanning cells...',
     arfcnPlaceholder: 'ARFCN',
-    lockCellBtn: 'Lock Cell'
+    lockCellBtn: 'Lock Cell',
+    recommended: 'Best',
+    recommendReason: 'Best overall signal quality',
+    cellList: 'Cell List',
+    current: 'Current'
   },
 
   // SMS
@@ -376,7 +387,53 @@ export default {
     enabled: 'Enabled',
     disabled: 'Disabled',
     configSaved: 'Config saved!',
-    deleteRecord: 'Delete Record'
+    deleteRecord: 'Delete Record',
+    // Tutorial
+    viewTutorial: 'Tutorial',
+    tutorialTitle: 'SMS Forward Tutorial',
+    tutorialSubtitle: 'Quick setup for message push',
+    tutorialIntro: 'Introduction',
+    tutorialIntroDesc: 'SMS forwarding can push received messages to your phone or computer in real-time, supporting WeChat, DingTalk, Feishu and other platforms. When a new SMS is received, the system will automatically send the content to your configured push service via Webhook. Some platforms (like PushPlus) support HTML format for customized message styling.',
+    tutorialPlatforms: 'Supported Platforms',
+    tutorialWechat: 'WeChat Push',
+    tutorialDingtalk: 'DingTalk Bot',
+    tutorialFeishu: 'Feishu Bot',
+    tutorialGroup: 'Group Message',
+    tutorialRecommend: 'Recommended',
+    tutorialQuickStart: 'Quick Start',
+    tutorialStep1Title: 'Get Token',
+    tutorialStep1Desc: 'Visit pushplus.plus, scan QR code to login and copy your Token',
+    tutorialStep2Title: 'Configure',
+    tutorialStep2Desc: 'Select PushPlus platform, replace YOUR_TOKEN in request body with your Token',
+    tutorialStep3Title: 'Test & Save',
+    tutorialStep3Desc: 'Click Test button to verify, then click Save if successful',
+    tutorialPushplusStep1: 'Visit PushPlus website and login with WeChat QR code. After login, find your Token on the "Send Message" page and copy it.',
+    tutorialPushplusStep2: 'Return to this page, ensure PushPlus is selected. Find YOUR_TOKEN in the request body and replace it with your Token. Enable the "Enable Webhook Notification" switch.',
+    tutorialPushplusStep3: 'Click "Test" button and check if you receive a test message on WeChat. If successful, click "Save" to complete the setup.',
+    tutorialOtherPlatforms: 'Other Platforms',
+    tutorialServerchanDesc: 'Visit sct.ftqq.com, login with WeChat QR code and copy your SendKey. Replace YOUR_KEY in the URL with your SendKey.',
+    tutorialBarkDesc: 'Search "Bark" in App Store and install. Open the app and copy the Key from the displayed push URL. Replace YOUR_KEY in the URL.',
+    tutorialDingtalkDesc: 'Open DingTalk group → Settings → Smart Assistant → Add Robot → Custom Robot. Set security to "Custom Keywords" and add keyword "新短信". Copy the access_token from the generated Webhook URL.',
+    tutorialFeishuDesc: 'Open Feishu group → Settings → Group Bots → Add Bot → Custom Bot. Copy the token part from the generated Webhook URL and replace YOUR_TOKEN.',
+    tutorialVariables: 'Supported Variables',
+    tutorialVariablesDesc: 'You can use the following variables in the request body, they will be automatically replaced with actual content:',
+    tutorialVarName: 'Variable',
+    tutorialVarDesc: 'Description',
+    tutorialVarExample: 'Example',
+    tutorialVarSender: 'Sender number',
+    tutorialVarContent: 'SMS content',
+    tutorialVarContentExample: 'Your code is 123456',
+    tutorialVarTime: 'Receive time',
+    tutorialCustomExample: 'Custom Configuration Example',
+    tutorialCustomExampleDesc: 'If you use other push services, you can customize the request body in the following format:',
+    tutorialFaq: 'FAQ',
+    tutorialFaq1Q: 'Test successful but not receiving actual SMS notifications?',
+    tutorialFaq1A: 'Please confirm you clicked "Save" and the "Enable Webhook Notification" switch is on. Some platforms have message limits, please check if exceeded.',
+    tutorialFaq2Q: 'What if it shows send failed?',
+    tutorialFaq2A: 'Please check if Token/Key is correctly copied, network is normal, and the push platform service is running properly.',
+    tutorialFaq3Q: 'Can I push to multiple platforms simultaneously?',
+    tutorialFaq3A: 'Currently only single platform is supported. For multi-platform push, consider using services with multi-channel support (like PushPlus multi-channel feature).',
+    tutorialGotIt: 'Got it'
   },
 
   // Traffic
@@ -579,6 +636,14 @@ export default {
     installingUpdate: 'Installing update',
     startUpdate: 'Start Update',
     updateWarning: 'Do not power off or close page during update. Recommend reboot after update completes.'
+  },
+
+  // Update Notification
+  updateNotification: {
+    title: 'New Version Available',
+    message: 'Version v{version} is available. Go to Update section for details.',
+    goUpdate: 'Go Update',
+    later: 'Later'
   },
 
   // AT Debug

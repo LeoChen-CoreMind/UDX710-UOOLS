@@ -16,6 +16,7 @@ import ApnConfig from './components/ApnConfig.vue'
 import PluginStore from './components/PluginStore.vue'
 import GlobalToast from './components/GlobalToast.vue'
 import GlobalConfirm from './components/GlobalConfirm.vue'
+import UpdateNotification from './components/UpdateNotification.vue'
 import { isLoggedIn, authGetStatus, clearAuthToken, authLogin } from './composables/useApi'
 import { useToast } from './composables/useToast'
 
@@ -126,6 +127,11 @@ function handleLogout() {
   loginPassword.value = ''
   rememberPassword.value = false
   stopRefreshInterval()
+}
+
+// 跳转到更新页面
+function handleGoUpdate() {
+  activeMenu.value = 'update'
 }
 
 // 监听401事件
@@ -610,6 +616,8 @@ onUnmounted(() => {
     </main>
     <GlobalToast />
     <GlobalConfirm />
+    <!-- 更新通知弹窗 -->
+    <UpdateNotification v-if="isAuthenticated" @go-update="handleGoUpdate" />
   </div>
 </template>
 

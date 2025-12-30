@@ -26,6 +26,7 @@ const smsFixEnabled = ref(false)
 const smsFixLoading = ref(false)
 const showSelectMode = ref(false)
 const showSentSelectMode = ref(false)
+const showTutorial = ref(false)
 
 const webhookConfig = ref({
   enabled: false, platform: 'pushplus', url: 'http://www.pushplus.plus/send',
@@ -372,6 +373,7 @@ async function saveSmsConfig() {
           <h3 class="text-slate-900 dark:text-white font-bold">{{ t('sms.webhookConfig') }}</h3>
         </div>
         <div class="flex space-x-2">
+          <button @click="showTutorial = true" class="px-3 py-2 bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-xl hover:bg-violet-500/30 transition-all border border-violet-500/30" :title="t('sms.viewTutorial')"><i class="fas fa-book"></i></button>
           <button @click="saveWebhook" class="px-4 py-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-500/30 transition-all border border-emerald-500/30">{{ t('sms.save') }}</button>
           <button @click="testWebhook" class="px-4 py-2 bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-500/30 transition-all border border-blue-500/30">{{ t('sms.test') }}</button>
         </div>
@@ -468,9 +470,10 @@ async function saveSmsConfig() {
               </div>
             </div>
             <button @click="toggleSmsFix" :disabled="smsFixLoading" 
-              class="px-4 py-2 rounded-xl transition-all border"
-              :class="smsFixEnabled ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/60 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/20'">
-              <i :class="smsFixLoading ? 'fas fa-spinner animate-spin' : (smsFixEnabled ? 'fas fa-check' : '')"></i> {{ smsFixLoading ? '' : (smsFixEnabled ? t('sms.enabled') : t('sms.disabled')) }}
+              class="px-3 py-2 rounded-xl transition-all border"
+              :class="smsFixEnabled ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/60 border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/20'"
+              :title="smsFixEnabled ? t('sms.enabled') : t('sms.disabled')">
+              <i :class="smsFixLoading ? 'fas fa-spinner animate-spin' : (smsFixEnabled ? 'fas fa-check' : 'fas fa-times')"></i>
             </button>
           </div>
         </div>
@@ -510,6 +513,211 @@ async function saveSmsConfig() {
             <div class="p-6 border-t border-slate-200 dark:border-white/10 flex justify-end space-x-3">
               <button @click="deleteMessage(currentMessage?.id)" class="px-4 py-2 bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/30 transition-all border border-red-500/30">{{ t('sms.delete') }}</button>
               <button @click="sendReply" :disabled="!replyContent.trim()" class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('sms.sendReply') }}</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- 教程弹窗 -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showTutorial" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showTutorial = false"></div>
+          <div class="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-slate-200 dark:border-white/10 bg-gradient-to-r from-violet-500/10 to-purple-500/10 flex-shrink-0">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center"><i class="fas fa-book text-white text-lg"></i></div>
+                  <div><h3 class="text-slate-900 dark:text-white font-bold">{{ t('sms.tutorialTitle') }}</h3><p class="text-slate-500 dark:text-white/50 text-sm">{{ t('sms.tutorialSubtitle') }}</p></div>
+                </div>
+                <button @click="showTutorial = false" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 flex items-center justify-center transition-all text-slate-600 dark:text-white/60"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+              <!-- 功能介绍 -->
+              <div class="p-4 bg-violet-50 dark:bg-violet-500/10 rounded-xl border border-violet-200 dark:border-violet-500/20">
+                <h4 class="text-violet-700 dark:text-violet-400 font-bold mb-2"><i class="fas fa-info-circle mr-2"></i>{{ t('sms.tutorialIntro') }}</h4>
+                <p class="text-slate-600 dark:text-white/70 text-sm">{{ t('sms.tutorialIntroDesc') }}</p>
+              </div>
+              
+              <!-- 支持的平台 -->
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold mb-3"><i class="fas fa-list-check mr-2 text-emerald-500"></i>{{ t('sms.tutorialPlatforms') }}</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">📱</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">PushPlus</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">{{ t('sms.tutorialWechat') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">🔔</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">Server酱</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">{{ t('sms.tutorialWechat') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">🍎</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">Bark</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">iOS</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">💬</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">{{ t('sms.tutorialDingtalk') }}</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">{{ t('sms.tutorialGroup') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">🐦</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">{{ t('sms.tutorialFeishu') }}</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">{{ t('sms.tutorialGroup') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
+                    <div class="text-lg mb-1">🎮</div>
+                    <p class="text-slate-700 dark:text-white/80 text-sm font-medium">Discord</p>
+                    <p class="text-slate-500 dark:text-white/40 text-xs">Webhook</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PushPlus详细配置 -->
+              <div class="p-4 bg-orange-50 dark:bg-orange-500/10 rounded-xl border border-orange-200 dark:border-orange-500/20">
+                <h4 class="text-orange-700 dark:text-orange-400 font-bold mb-3"><i class="fas fa-rocket mr-2"></i>{{ t('sms.tutorialQuickStart') }} - PushPlus（{{ t('sms.tutorialRecommend') }}）</h4>
+                <div class="space-y-4">
+                  <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-full bg-orange-500 text-white text-sm flex items-center justify-center flex-shrink-0 font-bold">1</div>
+                    <div class="flex-1">
+                      <p class="text-slate-800 dark:text-white/90 font-medium">{{ t('sms.tutorialStep1Title') }}</p>
+                      <p class="text-slate-600 dark:text-white/60 text-sm mt-1">{{ t('sms.tutorialPushplusStep1') }}</p>
+                      <div class="mt-2 p-2 bg-white dark:bg-black/20 rounded-lg border border-orange-200 dark:border-orange-500/20">
+                        <code class="text-orange-600 dark:text-orange-400 text-xs">https://www.pushplus.plus</code>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-full bg-orange-500 text-white text-sm flex items-center justify-center flex-shrink-0 font-bold">2</div>
+                    <div class="flex-1">
+                      <p class="text-slate-800 dark:text-white/90 font-medium">{{ t('sms.tutorialStep2Title') }}</p>
+                      <p class="text-slate-600 dark:text-white/60 text-sm mt-1">{{ t('sms.tutorialPushplusStep2') }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-full bg-orange-500 text-white text-sm flex items-center justify-center flex-shrink-0 font-bold">3</div>
+                    <div class="flex-1">
+                      <p class="text-slate-800 dark:text-white/90 font-medium">{{ t('sms.tutorialStep3Title') }}</p>
+                      <p class="text-slate-600 dark:text-white/60 text-sm mt-1">{{ t('sms.tutorialPushplusStep3') }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 其他平台配置 -->
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold mb-3"><i class="fas fa-cog mr-2 text-blue-500"></i>{{ t('sms.tutorialOtherPlatforms') }}</h4>
+                <div class="space-y-3">
+                  <!-- Server酱 -->
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <span class="text-lg">🔔</span>
+                      <span class="text-slate-800 dark:text-white/90 font-medium">Server酱</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-white/60 text-sm">{{ t('sms.tutorialServerchanDesc') }}</p>
+                    <div class="mt-2 p-2 bg-white dark:bg-black/20 rounded-lg">
+                      <code class="text-blue-600 dark:text-blue-400 text-xs">https://sct.ftqq.com</code>
+                    </div>
+                  </div>
+                  <!-- Bark -->
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <span class="text-lg">🍎</span>
+                      <span class="text-slate-800 dark:text-white/90 font-medium">Bark (iOS)</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-white/60 text-sm">{{ t('sms.tutorialBarkDesc') }}</p>
+                  </div>
+                  <!-- 钉钉 -->
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <span class="text-lg">💬</span>
+                      <span class="text-slate-800 dark:text-white/90 font-medium">{{ t('sms.tutorialDingtalk') }}</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-white/60 text-sm">{{ t('sms.tutorialDingtalkDesc') }}</p>
+                  </div>
+                  <!-- 飞书 -->
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <span class="text-lg">🐦</span>
+                      <span class="text-slate-800 dark:text-white/90 font-medium">{{ t('sms.tutorialFeishu') }}</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-white/60 text-sm">{{ t('sms.tutorialFeishuDesc') }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 变量说明 -->
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold mb-3"><i class="fas fa-code mr-2 text-cyan-500"></i>{{ t('sms.tutorialVariables') }}</h4>
+                <p class="text-slate-600 dark:text-white/60 text-sm mb-3">{{ t('sms.tutorialVariablesDesc') }}</p>
+                <div class="p-4 bg-slate-900 dark:bg-black/30 rounded-xl font-mono text-sm overflow-x-auto">
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-slate-400 text-left">
+                        <th class="pb-2">{{ t('sms.tutorialVarName') }}</th>
+                        <th class="pb-2">{{ t('sms.tutorialVarDesc') }}</th>
+                        <th class="pb-2">{{ t('sms.tutorialVarExample') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-white/80">
+                      <tr class="border-t border-slate-700">
+                        <td class="py-2 text-cyan-400">#{sender}</td>
+                        <td class="py-2 text-slate-400">{{ t('sms.tutorialVarSender') }}</td>
+                        <td class="py-2 text-green-400">10086</td>
+                      </tr>
+                      <tr class="border-t border-slate-700">
+                        <td class="py-2 text-cyan-400">#{content}</td>
+                        <td class="py-2 text-slate-400">{{ t('sms.tutorialVarContent') }}</td>
+                        <td class="py-2 text-green-400">{{ t('sms.tutorialVarContentExample') }}</td>
+                      </tr>
+                      <tr class="border-t border-slate-700">
+                        <td class="py-2 text-cyan-400">#{time}</td>
+                        <td class="py-2 text-slate-400">{{ t('sms.tutorialVarTime') }}</td>
+                        <td class="py-2 text-green-400">2025-01-01 12:00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 自定义配置示例 -->
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold mb-3"><i class="fas fa-edit mr-2 text-purple-500"></i>{{ t('sms.tutorialCustomExample') }}</h4>
+                <p class="text-slate-600 dark:text-white/60 text-sm mb-3">{{ t('sms.tutorialCustomExampleDesc') }}</p>
+                <div class="p-4 bg-slate-900 dark:bg-black/30 rounded-xl font-mono text-xs overflow-x-auto">
+                  <pre class="text-green-400 whitespace-pre-wrap">{
+  "title": "新短信通知",
+  "content": "发件人: #{sender}\n内容: #{content}\n时间: #{time}"
+}</pre>
+                </div>
+              </div>
+
+              <!-- 常见问题 -->
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold mb-3"><i class="fas fa-question-circle mr-2 text-amber-500"></i>{{ t('sms.tutorialFaq') }}</h4>
+                <div class="space-y-3">
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <p class="text-slate-800 dark:text-white/90 font-medium text-sm">Q: {{ t('sms.tutorialFaq1Q') }}</p>
+                    <p class="text-slate-600 dark:text-white/60 text-sm mt-1">A: {{ t('sms.tutorialFaq1A') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <p class="text-slate-800 dark:text-white/90 font-medium text-sm">Q: {{ t('sms.tutorialFaq2Q') }}</p>
+                    <p class="text-slate-600 dark:text-white/60 text-sm mt-1">A: {{ t('sms.tutorialFaq2A') }}</p>
+                  </div>
+                  <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                    <p class="text-slate-800 dark:text-white/90 font-medium text-sm">Q: {{ t('sms.tutorialFaq3Q') }}</p>
+                    <p class="text-slate-600 dark:text-white/60 text-sm mt-1">A: {{ t('sms.tutorialFaq3A') }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 dark:border-white/10 flex-shrink-0">
+              <button @click="showTutorial = false" class="w-full px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-violet-500/30 transition-all">{{ t('sms.tutorialGotIt') }}</button>
             </div>
           </div>
         </div>

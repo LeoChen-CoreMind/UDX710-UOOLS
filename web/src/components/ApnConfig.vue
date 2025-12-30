@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '../composables/useToast'
 import { useConfirm } from '../composables/useConfirm'
@@ -30,12 +30,13 @@ const form = ref({
   auth_method: 'chap'
 })
 
-// 预设
-const presets = [
-  { name: '中国移动', apn: 'cmnet', color: 'bg-blue-500' },
-  { name: '中国联通', apn: '3gnet', color: 'bg-red-500' },
-  { name: '中国电信', apn: 'ctnet', color: 'bg-green-500' }
-]
+// 预设（使用计算属性以支持语言切换）
+const presets = computed(() => [
+  { name: t('apn.chinaMobile'), apn: 'cmnet', color: 'bg-blue-500' },
+  { name: t('apn.chinaUnicom'), apn: '3gnet', color: 'bg-red-500' },
+  { name: t('apn.chinaTelecom'), apn: 'ctnet', color: 'bg-green-500' },
+  { name: t('apn.chinaBroadnet'), apn: 'cbnet', color: 'bg-purple-500' }
+])
 
 // 计算属性
 const selectedTemplate = computed(() => 
@@ -113,6 +114,9 @@ async function saveConfig() {
         console.warn('清除APN失败，但配置已保存')
         success(t('apn.configSaved') || '配置已保存')
       }
+      // 刷新UI状态
+      currentTemplate.value = null
+      await fetchConfig()
     } 
     // 手动模式：应用模板（仅当选择了模板时）
     else if (selectedTemplateId.value > 0) {
@@ -123,6 +127,8 @@ async function saveConfig() {
       })
       if (applyRes.ok) {
         success(t('apn.templateApplied'))
+        // 刷新UI状态
+        await fetchConfig()
       } else {
         // 尝试获取错误详情
         let errMsg = '应用模板失败'
@@ -186,17 +192,68 @@ async function saveTemplate() {
 
 // 删除模板
 async function deleteTemplate(tpl) {
+  // 检测是否为正在使用中的模板（手动模式且选中了该模板）
+  if (currentMode.value === 1 && selectedTemplateId.value === tpl.id) {
+    const switchOk = await confirm({ 
+      title: t('apn.deleteTemplate'), 
+      message: t('apn.activeTemplateHint') || '该模板正在使用中，需要先切换到自动模式才能删除。是否自动切换？', 
+      danger: true 
+    })
+    if (!switchOk) return
+    
+    // 自动切换到自动模式并删除模板
+    try {
+      // 1. 先切换到自动模式
+      const configRes = await fetch('/api/apn/config', {
+        method: 'POST',
+        headers: getHeaders(true),
+        body: JSON.stringify({ mode: 0, template_id: 0, auto_start: 0 })
+      })
+      if (!configRes.ok) throw new Error('切换自动模式失败')
+      
+      // 2. 删除模板
+      const deleteRes = await fetch(`/api/apn/templates/${tpl.id}`, { method: 'DELETE', headers: getHeaders() })
+      if (!deleteRes.ok) throw new Error('删除模板失败')
+      
+      // 3. 更新本地状态
+      const index = templates.value.findIndex(t => t.id === tpl.id)
+      if (index > -1) {
+        templates.value.splice(index, 1)
+      }
+      selectedTemplateId.value = 0
+      currentTemplate.value = null
+      await nextTick()
+      currentMode.value = 0
+      
+      success(t('apn.switchedToAuto') || '已切换到自动模式并删除模板')
+    } catch (e) {
+      error(e.message)
+    }
+    return
+  }
+  
+  // 普通删除流程
   const ok = await confirm({ title: t('apn.deleteTemplate'), message: `确定删除 "${tpl.name}"?`, danger: true })
   if (!ok) return
   
   try {
     const res = await fetch(`/api/apn/templates/${tpl.id}`, { method: 'DELETE', headers: getHeaders() })
     if (!res.ok) throw new Error('删除失败')
+    
+    // 先从本地数组移除，避免DOM更新问题
+    const index = templates.value.findIndex(t => t.id === tpl.id)
+    if (index > -1) {
+      templates.value.splice(index, 1)
+    }
+    if (selectedTemplateId.value === tpl.id) {
+      selectedTemplateId.value = 0
+    }
+    
     success(t('apn.templateDeleted'))
-    if (selectedTemplateId.value === tpl.id) selectedTemplateId.value = 0
-    await fetchTemplates()
   } catch (e) {
     error(e.message)
+    // 出错时重新获取列表
+    await fetchTemplates()
   }
 }
 
@@ -273,14 +330,32 @@ onMounted(async () => {
     </div>
 
     <!-- 自动模式提示 -->
-    <div v-show="currentMode === 0" class="bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20 p-6">
-      <div class="flex items-center space-x-4">
-        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-          <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+    <div v-show="currentMode === 0" class="space-y-4">
+      <!-- 主提示 -->
+      <div class="bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20 p-6">
+        <div class="flex items-start space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-blue-800 dark:text-blue-200 font-medium">{{ t('apn.autoModeHint') }}</p>
+            <p class="text-blue-600 dark:text-blue-300 text-sm mt-1">{{ t('apn.clearHint') }}</p>
+          </div>
         </div>
-        <div>
-          <p class="text-blue-800 dark:text-blue-200 font-medium">{{ t('apn.autoModeHint') }}</p>
-          <p class="text-blue-600 dark:text-blue-300 text-sm mt-1">{{ t('apn.clearHint') }}</p>
+      </div>
+      
+      <!-- APN说明卡片 -->
+      <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 p-5">
+        <div class="flex items-start space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-sim-card text-teal-500"></i>
+          </div>
+          <div>
+            <p class="text-slate-800 dark:text-white font-medium">{{ t('apn.apnSettingsTitle') || 'APN设置' }}</p>
+            <p class="text-slate-500 dark:text-white/60 text-sm mt-1 leading-relaxed">
+              {{ t('apn.apnDescription') }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -325,7 +400,7 @@ onMounted(async () => {
                 </div>
                 <div class="flex items-center space-x-2">
                   <div :class="['w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all', selectedTemplateId === tpl.id ? 'border-teal-500 bg-teal-500' : 'border-slate-300 dark:border-white/30']">
-                    <i v-show="selectedTemplateId === tpl.id" class="fas fa-check text-white text-xs"></i>
+                    <i v-if="selectedTemplateId === tpl.id" class="fas fa-check text-white text-xs"></i>
                   </div>
                   <button @click.stop="openEditDialog(tpl)" class="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 flex items-center justify-center transition-colors">
                     <i class="fas fa-pen text-blue-500 text-xs"></i>
