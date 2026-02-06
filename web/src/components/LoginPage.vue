@@ -21,8 +21,12 @@
               type="button" 
               class="toggle-password"
               @click.stop.prevent="showPassword = !showPassword"
+              tabindex="-1"
             >
-              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              <span class="icon-wrapper">
+                <i class="fas fa-eye" :class="showPassword ? 'icon-hidden' : 'icon-visible'"></i>
+                <i class="fas fa-eye-slash" :class="showPassword ? 'icon-visible' : 'icon-hidden'"></i>
+              </span>
             </button>
           </div>
         </div>
@@ -174,10 +178,35 @@ async function handleLogin() {
   cursor: pointer;
   padding: 8px;
   transition: color 0.2s;
+  user-select: none;
 }
 
 .toggle-password:hover {
   color: #4fc3f7;
+}
+
+.icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.icon-wrapper i {
+  position: absolute;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.icon-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.icon-hidden {
+  opacity: 0;
+  transform: scale(0.75);
 }
 
 .error-message {
