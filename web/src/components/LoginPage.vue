@@ -43,16 +43,32 @@
         </button>
       </form>
       
+      <!-- 忘记密码链接 -->
+      <div class="forgot-password">
+        <button type="button" @click="showForgotModal = true" class="forgot-link">
+          <i class="fas fa-question-circle"></i>
+          {{ $t('auth.forgotPassword') }}
+        </button>
+      </div>
+      
       <div class="login-footer">
         <p>{{ $t('auth.defaultPasswordHint') }}</p>
       </div>
     </div>
+    
+    <!-- 忘记密码弹窗 -->
+    <ForgotPasswordModal 
+      v-if="showForgotModal" 
+      @close="showForgotModal = false"
+      @reset-success="handleResetSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ForgotPasswordModal from './ForgotPasswordModal.vue'
 
 const { t } = useI18n()
 const emit = defineEmits(['login-success'])
@@ -61,6 +77,12 @@ const password = ref('')
 const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
+const showForgotModal = ref(false)
+
+function handleResetSuccess() {
+  // 密码重置成功后的处理
+  error.value = ''
+}
 
 async function handleLogin() {
   if (!password.value) return
@@ -246,6 +268,27 @@ async function handleLogin() {
 .login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.forgot-password {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  color: #4fc3f7;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: #81d4fa;
 }
 
 .login-footer {

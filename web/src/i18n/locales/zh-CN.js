@@ -50,7 +50,9 @@
     second: '秒',
     days: '{n}天',
     hours: '{n}小时',
-    minutes: '{n}分钟'
+    minutes: '{n}分钟',
+    next: '下一步',
+    back: '返回'
   },
 
   // 菜单标签
@@ -923,7 +925,9 @@
     confirmLogout: '确定要退出登录吗？',
     welcomeBack: '欢迎回来',
     loginToContinue: '请输入密码以继续',
-    loggingIn: '登录中...'
+    loggingIn: '登录中...',
+    forgotPassword: '忘记密码？',
+    passwordMismatch: '两次输入的密码不一致'
   },
 
   // 小区管理模块
@@ -1236,6 +1240,59 @@
     sendFailed: '失败',
     sendContent: '发送内容',
     sendResponse: '返回结果'
+  },
+
+  // 密保功能
+  security: {
+    // 设置页面
+    setupTitle: '设置密保问题',
+    setupDesc: '首次使用需要设置密保问题，用于找回密码和恢复出厂设置',
+    question1: '密保问题一',
+    answer1: '密保答案一',
+    question2: '密保问题二',
+    answer2: '密保答案二',
+    selectQuestion: '请选择问题',
+    customQuestion: '自定义问题',
+    enterCustomQuestion: '请输入自定义问题',
+    enterAnswer: '请输入答案',
+    setupWarning: '请牢记密保答案，遗忘后将无法找回密码！',
+    cannotChange: '密保问题设置后不可更改，除非恢复出厂设置！',
+    confirmSetup: '确认设置',
+    setupSuccess: '密保设置成功',
+    setupFailed: '密保设置失败',
+    invalidForm: '请完整填写所有内容，且两个问题不能相同',
+
+    // 预设问题
+    presetQ1: '你的出生地是？',
+    presetQ2: '你小时候最好的朋友叫什么名字？',
+    presetQ3: '你最喜欢的电影是？',
+    presetQ4: '你母亲的名字是？',
+    presetQ5: '你第一只宠物的名字是？',
+    presetQ6: '你小学的名字是？',
+    presetQ7: '你最喜欢的书是？',
+    presetQ8: '你的第一份工作是？',
+
+    // 验证相关
+    pleaseAnswer: '请回答所有问题',
+    confirmationRequired: '请正确输入确认文字',
+    typeToConfirm: '请输入',
+    fetchQuestionsFailed: '获取密保问题失败',
+
+    // 重置密码
+    resetPasswordSuccess: '密码重置成功，新密码为：admin',
+    resetPasswordFailed: '密码重置失败',
+    passwordTooShort: '密码长度至少4位',
+    resetToDefaultHint: '验证密保问题后，密码将重置为默认值：admin',
+    resetToDefault: '重置为默认密码',
+    notSetupTitle: '未设置密保问题',
+    notSetupDesc: '您尚未设置密保问题，无法通过此方式重置密码。请登录后在系统设置中设置密保问题。',
+
+    // 恢复出厂
+    factoryReset: '恢复出厂设置',
+    factoryResetDesc: '清除所有数据和配置，恢复到初始状态',
+    factoryResetWarning: '此操作将清除所有数据和配置，包括网络设置、短信记录等，且无法恢复！',
+    factoryResetSuccess: '恢复出厂设置成功，页面即将刷新',
+    factoryResetFailed: '恢复出厂设置失败'
   }
 }
 

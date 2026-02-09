@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { deviceControl, getRebootConfig, setReboot, clearReboot, getSystemTime, syncSystemTime, useApi, authChangePassword } from '../composables/useApi'
+import { deviceControl, getRebootConfig, setReboot, clearReboot, getSystemTime, syncSystemTime, useApi, authChangePassword, getSecurityQuestions, securityFactoryReset } from '../composables/useApi'
 import { useToast } from '../composables/useToast'
 import { useConfirm } from '../composables/useConfirm'
 
@@ -32,6 +32,15 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const changingPassword = ref(false)
 const showPasswordForm = ref(false)
+
+// 恢复出厂相关
+const showFactoryReset = ref(false)
+const factoryQuestions = ref({ question1: '', question2: '' })
+const factoryAnswer1 = ref('')
+const factoryAnswer2 = ref('')
+const factoryConfirmText = ref('')
+const factoryResetting = ref(false)
+const FACTORY_CONFIRM = '已知晓风险'
 
 const weekDays = [
   { value: '1', labelKey: 'settings.mon', short: '一' },
@@ -187,6 +196,57 @@ function togglePasswordForm() {
     oldPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
+  }
+}
+
+// 打开恢复出厂弹窗
+async function openFactoryReset() {
+  try {
+    const res = await getSecurityQuestions()
+    if (res.status === 'ok') {
+      factoryQuestions.value = res.data
+      showFactoryReset.value = true
+    } else {
+      error(res.message || t('security.fetchQuestionsFailed'))
+    }
+  } catch (e) {
+    error(t('security.fetchQuestionsFailed'))
+  }
+}
+
+// 取消恢复出厂
+function cancelFactoryReset() {
+  showFactoryReset.value = false
+  factoryAnswer1.value = ''
+  factoryAnswer2.value = ''
+  factoryConfirmText.value = ''
+}
+
+// 确认恢复出厂
+async function confirmFactoryReset() {
+  if (!factoryAnswer1.value || !factoryAnswer2.value) {
+    error(t('security.pleaseAnswer'))
+    return
+  }
+  if (factoryConfirmText.value !== FACTORY_CONFIRM) {
+    error(t('security.confirmationRequired'))
+    return
+  }
+  
+  factoryResetting.value = true
+  try {
+    const res = await securityFactoryReset(factoryAnswer1.value, factoryAnswer2.value, FACTORY_CONFIRM)
+    if (res.status === 'ok') {
+      success(t('security.factoryResetSuccess'))
+      // 恢复出厂成功后重新加载页面
+      setTimeout(() => location.reload(), 2000)
+    } else {
+      error(res.message || t('security.factoryResetFailed'))
+    }
+  } catch (e) {
+    error(t('security.factoryResetFailed'))
+  } finally {
+    factoryResetting.value = false
   }
 }
 
@@ -540,6 +600,23 @@ onUnmounted(() => {
           </div>
           <i class="fas fa-chevron-right text-slate-400 dark:text-white/40 group-hover:text-red-500 transition-colors"></i>
         </button>
+
+        <!-- 恢复出厂设置按钮 -->
+        <button 
+          @click="openFactoryReset"
+          class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-all group"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-200 dark:bg-white/10 group-hover:bg-red-500/20 flex items-center justify-center transition-colors">
+              <i class="fas fa-undo text-slate-500 dark:text-white/50 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors"></i>
+            </div>
+            <div class="text-left">
+              <p class="text-slate-900 dark:text-white font-medium group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{{ t('security.factoryReset') }}</p>
+              <p class="text-slate-500 dark:text-white/50 text-sm">{{ t('security.factoryResetDesc') }}</p>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-slate-400 dark:text-white/40 group-hover:text-red-500 transition-colors"></i>
+        </button>
       </div>
     </div>
 
@@ -591,6 +668,83 @@ onUnmounted(() => {
                 class="px-5 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {{ t('common.confirm') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 恢复出厂设置弹窗 -->
+      <Transition name="modal">
+        <div v-if="showFactoryReset" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="cancelFactoryReset"></div>
+          <div class="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- 头部 -->
+            <div class="px-6 py-4 bg-red-500 text-white">
+              <h3 class="font-bold text-lg flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {{ t('security.factoryReset') }}
+              </h3>
+            </div>
+            
+            <!-- 内容 -->
+            <div class="p-6 space-y-4">
+              <div class="text-red-500 text-sm bg-red-50 dark:bg-red-500/10 p-4 rounded-xl">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                {{ t('security.factoryResetWarning') }}
+              </div>
+              
+              <!-- 问题1 -->
+              <div>
+                <label class="block text-slate-600 dark:text-white/60 text-sm mb-2">{{ factoryQuestions.question1 }}</label>
+                <input 
+                  type="text"
+                  v-model="factoryAnswer1"
+                  :placeholder="t('security.enterAnswer')"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-xl text-slate-900 dark:text-white focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all"
+                />
+              </div>
+              
+              <!-- 问题2 -->
+              <div>
+                <label class="block text-slate-600 dark:text-white/60 text-sm mb-2">{{ factoryQuestions.question2 }}</label>
+                <input 
+                  type="text"
+                  v-model="factoryAnswer2"
+                  :placeholder="t('security.enterAnswer')"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-xl text-slate-900 dark:text-white focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all"
+                />
+              </div>
+              
+              <!-- 确认输入 -->
+              <div class="pt-2 border-t border-slate-200 dark:border-white/10">
+                <label class="block text-slate-600 dark:text-white/60 text-sm mb-2">
+                  {{ t('settings.inputToConfirm') }} "<span class="text-red-500 font-bold">{{ FACTORY_CONFIRM }}</span>" {{ t('settings.toConfirm') }}
+                </label>
+                <input 
+                  v-model="factoryConfirmText"
+                  type="text"
+                  :placeholder="FACTORY_CONFIRM"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-xl text-slate-900 dark:text-white focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all"
+                >
+              </div>
+            </div>
+            
+            <!-- 底部按钮 -->
+            <div class="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10 flex justify-end space-x-3">
+              <button 
+                @click="cancelFactoryReset"
+                class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+              >
+                {{ t('common.cancel') }}
+              </button>
+              <button 
+                @click="confirmFactoryReset"
+                :disabled="!factoryAnswer1 || !factoryAnswer2 || factoryConfirmText !== FACTORY_CONFIRM || factoryResetting"
+                class="px-5 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <i :class="factoryResetting ? 'fas fa-spinner animate-spin' : 'fas fa-undo'" class="mr-2"></i>
+                {{ factoryResetting ? t('common.loading') : t('common.confirm') }}
               </button>
             </div>
           </div>

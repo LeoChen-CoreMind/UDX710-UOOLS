@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 /* 当前固件版本 */
-#define FIRMWARE_VERSION "2.1.0"
+#define FIRMWARE_VERSION "2.3.0"
 
 /* 更新文件路径 */
 #define UPDATE_TMP_DIR "/tmp"
@@ -29,24 +29,24 @@ extern "C" {
 
 /* 版本信息结构 */
 typedef struct {
-    char version[32];
-    char url[512];
-    char changelog[1024];
-    size_t size;
-    int required;
+  char version[32];
+  char url[512];
+  char changelog[1024];
+  size_t size;
+  int required;
 } update_info_t;
 
 /**
  * @brief 获取当前版本
  * @return 版本字符串
  */
-const char* update_get_version(void);
+const char *update_get_version(void);
 
 /**
  * @brief 获取嵌入的版本检查URL
  * @return URL字符串
  */
-const char* update_get_embedded_url(void);
+const char *update_get_embedded_url(void);
 
 /**
  * @brief 从URL下载更新包

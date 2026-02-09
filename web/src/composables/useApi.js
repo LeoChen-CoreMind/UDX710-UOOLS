@@ -31,22 +31,22 @@ export async function authFetch(url, options = {}) {
   const headers = {
     ...options.headers
   }
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
-  
+
   const response = await fetch(url, {
     ...options,
     headers
   })
-  
+
   // 处理401未授权响应
   if (response.status === 401) {
     clearAuthToken()
     window.dispatchEvent(new CustomEvent('auth-required'))
   }
-  
+
   return response
 }
 
@@ -57,17 +57,17 @@ async function request(url, options = {}) {
     'Content-Type': 'application/json',
     ...options.headers
   }
-  
+
   // 添加Authorization头
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
-  
+
   const response = await fetch(`${BASE_URL}${url}`, {
     headers,
     ...options
   })
-  
+
   // 处理401未授权响应
   if (response.status === 401) {
     clearAuthToken()
@@ -75,7 +75,7 @@ async function request(url, options = {}) {
     window.dispatchEvent(new CustomEvent('auth-required'))
     throw new Error('未授权，请重新登录')
   }
-  
+
   if (!response.ok) {
     throw new Error(`HTTP错误: ${response.status}`)
   }
@@ -263,10 +263,10 @@ export async function getCells() {
 export async function lockCell(technology, arfcn, pci) {
   return request('/api/lock_cell', {
     method: 'POST',
-    body: JSON.stringify({ 
-      technology, 
-      arfcn: arfcn.toString(), 
-      pci: pci.toString() 
+    body: JSON.stringify({
+      technology,
+      arfcn: arfcn.toString(),
+      pci: pci.toString()
     })
   })
 }
@@ -532,5 +532,41 @@ export async function setNetifMonitor(ifname, enabled) {
   return request('/api/netif/monitor', {
     method: 'POST',
     body: JSON.stringify({ interface: ifname, enabled })
+  })
+}
+
+// ==================== 密保API ====================
+
+// 获取密保状态
+export async function getSecurityStatus() {
+  return request('/api/security/status')
+}
+
+// 设置密保问题
+export async function setupSecurityQuestions(q1, a1, q2, a2) {
+  return request('/api/security/setup', {
+    method: 'POST',
+    body: JSON.stringify({ question1: q1, answer1: a1, question2: q2, answer2: a2 })
+  })
+}
+
+// 获取密保问题（用于验证）
+export async function getSecurityQuestions() {
+  return request('/api/security/questions')
+}
+
+// 重置密码（需验证密保）
+export async function securityResetPassword(a1, a2, confirmation) {
+  return request('/api/security/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ answer1: a1, answer2: a2, confirm: confirmation })
+  })
+}
+
+// 恢复出厂设置（需验证密保）
+export async function securityFactoryReset(a1, a2, confirmation) {
+  return request('/api/security/factory-reset', {
+    method: 'POST',
+    body: JSON.stringify({ answer1: a1, answer2: a2, confirm: confirmation })
   })
 }

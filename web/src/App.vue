@@ -20,7 +20,9 @@ import IPv6Proxy from './components/IPv6Proxy.vue'
 import GlobalToast from './components/GlobalToast.vue'
 import GlobalConfirm from './components/GlobalConfirm.vue'
 import UpdateNotification from './components/UpdateNotification.vue'
-import { isLoggedIn, authGetStatus, clearAuthToken, authLogin } from './composables/useApi'
+import SecuritySetup from './components/SecuritySetup.vue'
+import ForgotPasswordModal from './components/ForgotPasswordModal.vue'
+import { isLoggedIn, authGetStatus, clearAuthToken, authLogin, getSecurityStatus } from './composables/useApi'
 import { useToast } from './composables/useToast'
 
 // i18n
@@ -32,11 +34,16 @@ const isAuthenticated = ref(false)
 const authChecking = ref(true)
 const showLoginModal = ref(false)
 
+// 密保状态
+const securitySet = ref(false)
+const securityChecking = ref(true)
+
 // 登录表单
 const loginPassword = ref('')
 const rememberPassword = ref(false)
 const loggingIn = ref(false)
 const showPassword = ref(false)
+const showForgotModal = ref(false)
 
 // 检查登录状态
 async function checkAuthStatus() {
@@ -66,6 +73,9 @@ async function checkAuthStatus() {
         loginPassword.value = savedPassword
         rememberPassword.value = true
       }
+    } else {
+      // 登录成功后检查密保状态
+      await checkSecurityStatus()
     }
   } catch (err) {
     console.error('Auth check error:', err)
@@ -75,6 +85,28 @@ async function checkAuthStatus() {
   } finally {
     authChecking.value = false
   }
+}
+
+// 检查密保状态
+async function checkSecurityStatus() {
+  securityChecking.value = true
+  try {
+    const res = await getSecurityStatus()
+    securitySet.value = res.status === 'ok' && res.data?.is_set === true
+  } catch (e) {
+    console.error('Security check error:', e)
+    securitySet.value = false
+  } finally {
+    securityChecking.value = false
+  }
+}
+
+// 密保设置完成处理
+function handleSecuritySetup() {
+  securitySet.value = true
+  success(t('security.setupSuccess'))
+  fetchSystemInfo()
+  startRefreshInterval()
 }
 
 // 处理登录
@@ -113,12 +145,15 @@ async function handleLogin() {
 }
 
 // 登录成功处理（兼容旧接口）
-function handleLoginSuccess() {
+async function handleLoginSuccess() {
   isAuthenticated.value = true
   showLoginModal.value = false
-  // 登录成功后开始获取系统信息
-  fetchSystemInfo()
-  startRefreshInterval()
+  // 登录成功后检查密保状态
+  await checkSecurityStatus()
+  if (securitySet.value) {
+    fetchSystemInfo()
+    startRefreshInterval()
+  }
 }
 
 // 登出处理
@@ -309,8 +344,8 @@ onMounted(async () => {
   // 检查登录状态
   await checkAuthStatus()
   
-  // 如果已登录，开始获取系统信息
-  if (isAuthenticated.value) {
+  // 如果已登录且密保已设置，开始获取系统信息
+  if (isAuthenticated.value && securitySet.value) {
     fetchSystemInfo()
     startRefreshInterval()
   }
@@ -333,7 +368,7 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <!-- 主界面（始终显示，未登录时模糊） -->
+  <!-- 主界面 -->
   <div v-else class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex transition-all duration-500">
     
     <!-- 登录弹窗遮罩 -->
@@ -383,9 +418,13 @@ onUnmounted(() => {
                       <button 
                         type="button"
                         @click.stop.prevent="showPassword = !showPassword"
-                        class="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60 transition-colors z-10"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60 z-10 select-none"
+                        tabindex="-1"
                       >
-                        <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" class="w-5" />
+                        <span class="relative w-5 h-5 flex items-center justify-center">
+                          <font-awesome-icon icon="eye" class="absolute transition-all duration-200" :class="showPassword ? 'opacity-0 scale-75' : 'opacity-100 scale-100'" />
+                          <font-awesome-icon icon="eye-slash" class="absolute transition-all duration-200" :class="showPassword ? 'opacity-100 scale-100' : 'opacity-0 scale-75'" />
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -425,6 +464,18 @@ onUnmounted(() => {
                     {{ loggingIn ? t('auth.loggingIn') : t('auth.login') }}
                   </button>
                 </form>
+                
+                <!-- 忘记密码链接 -->
+                <div class="mt-4 text-center">
+                  <button 
+                    type="button" 
+                    @click="showLoginModal = false; showForgotModal = true"
+                    class="text-blue-500 hover:text-blue-400 text-sm inline-flex items-center gap-2 transition-colors"
+                  >
+                    <font-awesome-icon icon="question-circle" />
+                    {{ t('auth.forgotPassword') }}
+                  </button>
+                </div>
               </div>
               
               <!-- 底部提示 -->
@@ -439,6 +490,14 @@ onUnmounted(() => {
         </Transition>
       </div>
     </Transition>
+    
+    <!-- 忘记密码弹窗 -->
+    <ForgotPasswordModal 
+      v-if="showForgotModal" 
+      @close="showForgotModal = false; showLoginModal = true"
+      @reset-success="showForgotModal = false; showLoginModal = true"
+    />
+    
     <!-- 移动端遮罩层 -->
     <div 
       v-if="isMobile && sidebarOpen"
@@ -603,7 +662,13 @@ onUnmounted(() => {
 
       <!-- 内容区域 -->
       <div class="p-3 md:p-6">
-        <Transition name="fade" mode="out-in">
+        <!-- 密保设置优先显示 -->
+        <SecuritySetup 
+          v-if="!securitySet && !securityChecking"
+          @setup-complete="handleSecuritySetup"
+        />
+        <!-- 正常内容区 -->
+        <Transition v-else name="fade" mode="out-in">
           <SystemMonitor v-if="activeMenu === 'monitor'" key="monitor" />
           <NetworkManager v-else-if="activeMenu === 'network'" key="network" />
           <AdvancedNetwork v-else-if="activeMenu === 'advanced'" key="advanced" />

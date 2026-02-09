@@ -50,7 +50,9 @@ export default {
     second: 'second',
     days: '{n} days',
     hours: '{n} hours',
-    minutes: '{n} minutes'
+    minutes: '{n} minutes',
+    next: 'Next',
+    back: 'Back'
   },
 
   // Menu
@@ -924,7 +926,8 @@ export default {
     confirmLogout: 'Are you sure you want to logout?',
     welcomeBack: 'Welcome Back',
     loginToContinue: 'Enter password to continue',
-    loggingIn: 'Logging in...'
+    loggingIn: 'Logging in...',
+    forgotPassword: 'Forgot Password?'
   },
 
   // Cell Manager
@@ -1222,6 +1225,59 @@ export default {
     sendFailed: 'Failed',
     sendContent: 'Send Content',
     sendResponse: 'Response'
+  },
+
+  // Security
+  security: {
+    // Setup
+    setupTitle: 'Setup Security Questions',
+    setupDesc: 'You need to setup security questions for password recovery and factory reset',
+    question1: 'Security Question 1',
+    answer1: 'Answer 1',
+    question2: 'Security Question 2',
+    answer2: 'Answer 2',
+    selectQuestion: 'Select a question',
+    customQuestion: 'Custom Question',
+    enterCustomQuestion: 'Enter custom question',
+    enterAnswer: 'Enter answer',
+    setupWarning: 'Please remember your answers! You cannot recover password without them!',
+    cannotChange: 'Security questions cannot be changed after setup unless factory reset!',
+    confirmSetup: 'Confirm Setup',
+    setupSuccess: 'Security questions set successfully',
+    setupFailed: 'Failed to set security questions',
+    invalidForm: 'Please fill in all fields. Questions must be different.',
+
+    // Preset Questions
+    presetQ1: 'What is your birthplace?',
+    presetQ2: 'What was your best friend\'s name in childhood?',
+    presetQ3: 'What is your favorite movie?',
+    presetQ4: 'What is your mother\'s name?',
+    presetQ5: 'What was your first pet\'s name?',
+    presetQ6: 'What was your elementary school\'s name?',
+    presetQ7: 'What is your favorite book?',
+    presetQ8: 'What was your first job?',
+
+    // Verification
+    pleaseAnswer: 'Please answer all questions',
+    confirmationRequired: 'Please enter the confirmation text correctly',
+    typeToConfirm: 'Type',
+    fetchQuestionsFailed: 'Failed to fetch security questions',
+
+    // Reset Password
+    resetPasswordSuccess: 'Password reset successfully. New password: admin',
+    resetPasswordFailed: 'Failed to reset password',
+    passwordTooShort: 'Password must be at least 4 characters',
+    resetToDefaultHint: 'After verifying security questions, password will be reset to default: admin',
+    resetToDefault: 'Reset to Default Password',
+    notSetupTitle: 'Security Questions Not Set',
+    notSetupDesc: 'You have not set up security questions. Please log in first and set up security questions in System Settings.',
+
+    // Factory Reset
+    factoryReset: 'Factory Reset',
+    factoryResetDesc: 'Clear all data and configurations, restore to initial state',
+    factoryResetWarning: 'This will clear all data and configurations including network settings, SMS records, etc. This cannot be undone!',
+    factoryResetSuccess: 'Factory reset successful. Page will refresh shortly.',
+    factoryResetFailed: 'Factory reset failed'
   }
 }
 
