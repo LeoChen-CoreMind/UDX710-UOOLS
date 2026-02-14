@@ -1771,6 +1771,16 @@ static void on_manager_property_changed(
     const gchar *new_datacard = g_variant_get_string(prop_value, NULL);
     printf("[DataMonitor] 检测到切卡: %s\n", new_datacard);
 
+    /* 重新初始化 D-Bus 连接（更新 g_modem_path 和 g_modem_proxy 到新卡） */
+    printf("[DataMonitor] 重新初始化 D-Bus 连接...\n");
+    close_dbus();
+    usleep(500000); /* 等待 500ms oFono 内部状态同步 */
+    if (init_dbus() == 0) {
+      printf("[DataMonitor] D-Bus 重新初始化成功\n");
+    } else {
+      printf("[DataMonitor] D-Bus 重新初始化失败!\n");
+    }
+
     /* 重新订阅信号（使用新的卡槽路径） */
     printf("[DataMonitor] 重新订阅信号...\n");
 
