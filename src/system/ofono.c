@@ -34,9 +34,24 @@ static GDBusConnection *g_dbus_conn = NULL;
 static GDBusProxy *g_modem_proxy = NULL;
 static pthread_mutex_t g_at_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char g_last_error[512] = {0};
-static char g_modem_path[64] = DEFAULT_MODEM_PATH;
+static char g_modem_path[64] =
+    DEFAULT_MODEM_PATH; /* 缓存路径，仅用于 proxy 切换检测 */
 
 /* ==================== 内部辅助函数 ==================== */
+
+/**
+ * 动态获取当前 modem 路径（每次实时查询 oFono DataCard）
+ * 切卡后自动返回正确的 /ril_0 或 /ril_1
+ */
+static const char *get_current_modem_path(void) {
+  char slot[16], ril_path[32];
+  if (get_current_slot(slot, ril_path) == 0 &&
+      strcmp(ril_path, "unknown") != 0) {
+    strncpy(g_modem_path, ril_path, sizeof(g_modem_path) - 1);
+    g_modem_path[sizeof(g_modem_path) - 1] = '\0';
+  }
+  return g_modem_path;
+}
 
 /* 设置错误信息 */
 static void set_error(const char *fmt, ...) {
@@ -103,15 +118,8 @@ int init_dbus(void) {
   }
 
   /* 动态获取当前卡槽路径 */
-  char slot[16], ril_path[32];
-  if (get_current_slot(slot, ril_path) == 0 &&
-      strcmp(ril_path, "unknown") != 0) {
-    strncpy(g_modem_path, ril_path, sizeof(g_modem_path) - 1);
-    g_modem_path[sizeof(g_modem_path) - 1] = '\0';
-    printf("D-Bus 使用卡槽: %s (%s)\n", slot, g_modem_path);
-  } else {
-    printf("D-Bus 使用默认卡槽: %s\n", g_modem_path);
-  }
+  const char *modem_path = get_current_modem_path();
+  printf("D-Bus 使用卡槽: %s\n", modem_path);
 
   /* 获取系统 D-Bus 连接 */
   if (!g_dbus_conn) {
@@ -126,7 +134,7 @@ int init_dbus(void) {
 
   /* 创建 oFono Modem 代理对象 */
   g_modem_proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE,
-                                        NULL, OFONO_SERVICE, g_modem_path,
+                                        NULL, OFONO_SERVICE, modem_path,
                                         OFONO_MODEM_IFACE, NULL, &error);
 
   if (!g_modem_proxy) {
@@ -137,7 +145,7 @@ int init_dbus(void) {
     return -1;
   }
 
-  printf("D-Bus 连接和 oFono Modem 对象初始化成功 (路径: %s)\n", g_modem_path);
+  printf("D-Bus 连接和 oFono Modem 对象初始化成功 (路径: %s)\n", modem_path);
   return 0;
 }
 
@@ -180,6 +188,29 @@ int execute_at(const char *command, char **result) {
     printf("D-Bus 未初始化，尝试初始化...\n");
     if (init_dbus() != 0) {
       return -1;
+    }
+  }
+
+  /* 动态检测 modem 路径变化，切卡后自动重建 proxy */
+  const char *current_path = get_current_modem_path();
+  if (g_modem_proxy) {
+    const gchar *proxy_path = g_dbus_proxy_get_object_path(g_modem_proxy);
+    if (proxy_path && strcmp(proxy_path, current_path) != 0) {
+      printf("[AT] 检测到 modem 路径变化: %s -> %s，重建 proxy...\n",
+             proxy_path, current_path);
+      g_object_unref(g_modem_proxy);
+      g_modem_proxy = NULL;
+      GError *perr = NULL;
+      g_modem_proxy = g_dbus_proxy_new_sync(
+          g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL, OFONO_SERVICE,
+          current_path, OFONO_MODEM_IFACE, NULL, &perr);
+      if (!g_modem_proxy) {
+        printf("[AT] 重建 proxy 失败: %s\n", perr ? perr->message : "unknown");
+        if (perr)
+          g_error_free(perr);
+        return -1;
+      }
+      printf("[AT] proxy 重建成功 (路径: %s)\n", current_path);
     }
   }
 
@@ -574,7 +605,7 @@ static int find_internet_context_path(char *path_buf, size_t buf_size) {
 
   /* 创建 ConnectionManager 代理 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_CONNECTION_MANAGER, NULL, &error);
 
   if (!proxy) {
@@ -799,7 +830,7 @@ int ofono_get_roaming_status(int *roaming_allowed, int *is_roaming) {
 
   /* 1. 获取 ConnectionManager 的 RoamingAllowed 属性 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_CONNECTION_MANAGER, NULL, &error);
 
   if (!proxy) {
@@ -841,7 +872,7 @@ int ofono_get_roaming_status(int *roaming_allowed, int *is_roaming) {
 
   /* 2. 获取 NetworkRegistration 的 Status 属性判断是否漫游中 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_NETWORK_REGISTRATION, NULL, &error);
 
   if (!proxy) {
@@ -893,7 +924,7 @@ int ofono_set_roaming_allowed(int allowed) {
   }
 
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_CONNECTION_MANAGER, NULL, &error);
 
   if (!proxy) {
@@ -934,7 +965,7 @@ int ofono_get_all_apn_contexts(ApnContext *contexts, int max_count) {
 
   /* 创建 ConnectionManager 代理 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_CONNECTION_MANAGER, NULL, &error);
 
   if (!proxy) {
@@ -1221,7 +1252,7 @@ int ofono_get_serving_cell_tech(char *tech, int size) {
 
   /* 创建 NetworkMonitor 代理 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_NETWORK_MONITOR, NULL, &error);
 
   if (!proxy) {
@@ -1294,7 +1325,7 @@ int ofono_get_serving_cell_info(char *tech, int tech_size, int *band) {
 
   /* 创建 NetworkMonitor 代理 */
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_NETWORK_MONITOR, NULL, &error);
 
   if (!proxy) {
@@ -1381,7 +1412,7 @@ int ofono_get_network_status(char *status, int size) {
   status[0] = '\0';
 
   proxy = g_dbus_proxy_new_sync(g_dbus_conn, G_DBUS_PROXY_FLAGS_NONE, NULL,
-                                OFONO_SERVICE, g_modem_path,
+                                OFONO_SERVICE, get_current_modem_path(),
                                 OFONO_NETWORK_REGISTRATION, NULL, &error);
 
   if (!proxy) {
@@ -1771,15 +1802,10 @@ static void on_manager_property_changed(
     const gchar *new_datacard = g_variant_get_string(prop_value, NULL);
     printf("[DataMonitor] 检测到切卡: %s\n", new_datacard);
 
-    /* 重新初始化 D-Bus 连接（更新 g_modem_path 和 g_modem_proxy 到新卡） */
-    printf("[DataMonitor] 重新初始化 D-Bus 连接...\n");
-    close_dbus();
-    usleep(500000); /* 等待 500ms oFono 内部状态同步 */
-    if (init_dbus() == 0) {
-      printf("[DataMonitor] D-Bus 重新初始化成功\n");
-    } else {
-      printf("[DataMonitor] D-Bus 重新初始化失败!\n");
-    }
+    /* 动态检测方案：不再 close_dbus/init_dbus，所有函数已自动使用
+     * get_current_modem_path() 获取正确路径，无需重建连接 */
+    printf("[DataMonitor] modem 路径将在下次调用时自动切换到: %s\n",
+           new_datacard);
 
     /* 重新订阅信号（使用新的卡槽路径） */
     printf("[DataMonitor] 重新订阅信号...\n");
@@ -1799,6 +1825,9 @@ static void on_manager_property_changed(
         NULL);
     printf("[DataMonitor] NetworkRegistration 信号重新订阅 ID: %u (路径: %s)\n",
            g_network_signal_id, new_datacard);
+
+    /* 等待一小段时间让 oFono 内部状态同步 */
+    usleep(300000); /* 300ms */
 
     /* 立即检查数据连接状态 */
     char result[256];

@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 /* 当前固件版本 */
-#define FIRMWARE_VERSION "2.3.4"
+#define FIRMWARE_VERSION "2.3.5"
 
 /* 更新文件路径 */
 #define UPDATE_TMP_DIR "/tmp"
