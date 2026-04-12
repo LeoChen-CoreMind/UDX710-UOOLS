@@ -1484,7 +1484,7 @@ void handle_script_list(struct mg_connection *c, struct mg_http_message *hm) {
           char item[70000];
           snprintf(item, sizeof(item),
                    "%s{\"name\":\"%s\",\"size\":%ld,\"mtime\":%ld,\"content\":"
-                   "\"%s\"}",
+                   "%s}",
                    first ? "" : ",", entry->d_name, st.st_size, st.st_mtime,
                    escaped);
           strcat(json, item);
